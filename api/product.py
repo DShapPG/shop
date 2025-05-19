@@ -1,18 +1,22 @@
 from django.shortcuts import render
 from .models import Product
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 from rest_framework import status
 from .serializer import ProductSerializer
+from rest_framework.permissions import IsAdminUser
+from rest_framework.decorators import api_view, permission_classes
+
 
 
 @api_view(['GET', 'POST'])
-def product_list(request, ):
+def product_list(request):
     if request.method == 'GET':
         products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
+        if not request.user.is_staff:
+            return Response(status=status.HTTP_403_FORBIDDEN)
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -30,12 +34,16 @@ def product_detail(request, pk = None):
         serializer = ProductSerializer(product)
         return Response(serializer.data)
     if request.method == 'PUT':
+        if not request.user.is_staff:
+            return Response(status=status.HTTP_403_FORBIDDEN)
         serializer = ProductSerializer(product, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response("Product updated successfully", status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     if request.method == 'DELETE':
+        if not request.user.is_staff:
+            return Response(status=status.HTTP_403_FORBIDDEN)
         product.delete()
         return Response("Product deleted successfully", status=status.HTTP_204_NO_CONTENT)
 
