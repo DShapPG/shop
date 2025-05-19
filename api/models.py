@@ -7,3 +7,5 @@ class Product(models.Model):
     price = models.FloatField()
     stock = models.IntegerField()
 
+class Category(models.Model):
+    name = models.CharField(max_length=100)
