@@ -12,10 +12,24 @@ from rest_framework.decorators import api_view, permission_classes
 def product_list(request):
     if request.method == 'GET':
         category_id = request.GET.get('category')  #?category=...
+        search = request.GET.get('search') # filter by name
+        price_min = request.GET.get('price_min') # filter by price
+        price_max = request.GET.get('price_max') # filter by price
         if category_id:
             if not Category.objects.filter(id=category_id).exists():
                 return Response(status=status.HTTP_404_NOT_FOUND)
             products = Product.objects.filter(category_id=category_id)
+        if search:
+            if not Product.objects.filter(name=search).exists() and not Product.objects.filter(description=search).exists():
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            if Product.objects.filter(name=search).exists():
+                products = Product.objects.filter(name=search)
+            elif Product.objects.filter(description=search).exists():
+                products = Product.objects.filter(description=search)
+        if price_min and price_max:
+            if not Product.objects.filter(price__range=(price_min, price_max)).exists():
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            products = Product.objects.filter(price__range=(price_min, price_max))
         else:
             products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
