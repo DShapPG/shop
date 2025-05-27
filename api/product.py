@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Product
+from .models import Product, Category
 from rest_framework.response import Response
 from rest_framework import status
 from .serializer import ProductSerializer
@@ -11,7 +11,13 @@ from rest_framework.decorators import api_view, permission_classes
 @api_view(['GET', 'POST'])
 def product_list(request):
     if request.method == 'GET':
-        products = Product.objects.all()
+        category_id = request.GET.get('category')  #?category=...
+        if category_id:
+            if not Category.objects.filter(id=category_id).exists():
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            products = Product.objects.filter(category_id=category_id)
+        else:
+            products = Product.objects.all()
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
@@ -48,7 +54,5 @@ def product_detail(request, pk = None):
         return Response("Product deleted successfully", status=status.HTTP_204_NO_CONTENT)
 
 
-
-#
 #
 #
