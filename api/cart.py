@@ -14,20 +14,25 @@ def get_cart(request):
         serializer = CartSerializer(cart_items, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
-        create_cart(request)
-        return add_product(request)
+        cart = create_cart(request)
+        if cart.status_code == status.HTTP_201_CREATED:
+            return add_product(request)
+        return cart
 
 
 def create_cart(request):
-    serializer = CartSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save(user = request.user)
+    try:
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        serializer = CartSerializer(cart)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 def add_product(request):
     serializer = CartItemSerializer(data=request.data)
+    cart = Cart.objects.get(user=request.user)
     if serializer.is_valid():
-        serializer.save()
+        serializer.save(cart=cart)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
