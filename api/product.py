@@ -3,10 +3,26 @@ from .models import Product, Category
 from rest_framework.response import Response
 from rest_framework import status
 from .serializer import ProductSerializer
-from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import api_view, permission_classes
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
+@swagger_auto_schema(
+    method='get',
+    manual_parameters=[
+        openapi.Parameter('category', openapi.IN_QUERY, description="ID категории", type=openapi.TYPE_INTEGER),
+        openapi.Parameter('search', openapi.IN_QUERY, description="Поиск по имени или описанию", type=openapi.TYPE_STRING),
+        openapi.Parameter('price_min', openapi.IN_QUERY, description="Минимальная цена", type=openapi.TYPE_NUMBER),
+        openapi.Parameter('price_max', openapi.IN_QUERY, description="Максимальная цена", type=openapi.TYPE_NUMBER),
+    ],
+    responses={200: ProductSerializer(many=True)}
+)
+@swagger_auto_schema(
+    method='post',
+    request_body=ProductSerializer,
+    responses={201: openapi.Response("Product created successfully")}
+)
 
 @api_view(['GET', 'POST'])
 def product_list(request):
